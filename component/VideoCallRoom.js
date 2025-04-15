@@ -1,6 +1,6 @@
 'use client'
 import React, { useEffect, useRef, useState } from 'react';
-import { connect, createLocalTracks } from 'twilio-video';
+import { connect, createLocalAudioTrack, createLocalTracks, createLocalVideoTrack } from 'twilio-video';
 
 const VideoCallRoom = ({ token, roomName }) => {
   const [room, setRoom] = useState(null);
@@ -58,6 +58,9 @@ const VideoCallRoom = ({ token, roomName }) => {
           audio: true,
           video: { width: 640 }
         });
+
+        const videoTrack = await createLocalVideoTrack();
+        const audioTrack = await createLocalAudioTrack();
     
         // Create a MediaStream from both tracks
         const mediaStream = new MediaStream(localTracks.map(track => track.mediaStreamTrack));
@@ -75,7 +78,7 @@ const VideoCallRoom = ({ token, roomName }) => {
         // Connect to Twilio room
         const room = await connect(token, {
           name: roomName,
-          tracks: localTracks
+          tracks: [videoTrack,audioTrack]
         });
     
         setRoom(room);
