@@ -57,6 +57,7 @@ const VideoCallRoom = ({ token, roomName }) => {
         const localTracks = await createLocalTracks({
           audio: true,
           video: { width: 640 }
+          
         });
 
         const videoTrack = await createLocalVideoTrack();
@@ -68,7 +69,7 @@ const VideoCallRoom = ({ token, roomName }) => {
         // Attach to a single video element
         const videoElement = document.createElement('video');
         videoElement.autoplay = true;
-        videoElement.muted = true; // Mute local to prevent echo
+        videoElement.muted = false; // Mute local to prevent echo
         videoElement.srcObject = mediaStream;
     
         // Append to the DOM
