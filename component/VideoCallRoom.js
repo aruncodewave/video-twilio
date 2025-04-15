@@ -25,6 +25,7 @@ const VideoCallRoom = ({ token, roomName }) => {
           name: roomName,
           tracks: localTracks
         });
+        debugger
         setRoom(room);
       } catch (error) {
         console.error('Failed to connect to the room:', error);

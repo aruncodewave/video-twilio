@@ -35,6 +35,7 @@ export default function Home() {
       'Access-Control-Allow-Origin': '*'
       }
     });
+    debugger
     setToken(res.data.token);
     } catch (error) {
     console.error('Error fetching token:', error);
@@ -77,7 +78,7 @@ export default function Home() {
           className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">submit</button>
       </div>
       { token !==null ? (
-        <>  <VideoCallRoom/></>
+        <>  <VideoCallRoom token={token} roomName={room}/></>
       ) : (
         ''
       )}
