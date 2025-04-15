@@ -1,4 +1,5 @@
 'use client'
+import axios from 'axios';
 import React, { useEffect, useRef, useState } from 'react';
 import { connect, createLocalAudioTrack, createLocalTracks, createLocalVideoTrack } from 'twilio-video';
 
@@ -6,6 +7,7 @@ const VideoCallRoom = ({ token, roomName }) => {
   const [room, setRoom] = useState(null);
   const [isAudioEnabled, setAudioEnabled] = useState(true);
   const [isVideoEnabled, setVideoEnabled] = useState(true);
+  const [sid, setSid] = useState(null);
   const localMediaRef = useRef(null);
   const remoteMediaRef = useRef(null);
 
@@ -50,18 +52,13 @@ const VideoCallRoom = ({ token, roomName }) => {
     //   }
     // };
 
-
     const joinRoom = async () => {
       try {
         // Create local audio and video tracks
         const localTracks = await createLocalTracks({
           audio: true,
           video: { width: 640 }
-          
         });
-
-        const videoTrack = await createLocalVideoTrack();
-        const audioTrack = await createLocalAudioTrack();
     
         // Create a MediaStream from both tracks
         const mediaStream = new MediaStream(localTracks.map(track => track.mediaStreamTrack));
@@ -69,21 +66,42 @@ const VideoCallRoom = ({ token, roomName }) => {
         // Attach to a single video element
         const videoElement = document.createElement('video');
         videoElement.autoplay = true;
-        videoElement.muted = false; // Mute local to prevent echo
+        videoElement.muted = true; // Mute local preview to prevent echo
         videoElement.srcObject = mediaStream;
     
         // Append to the DOM
-        localMediaRef.current.innerHTML = ''; // Clear previous
+        localMediaRef.current.innerHTML = '';
         localMediaRef.current.appendChild(videoElement);
     
-        // Connect to Twilio room
+        // Connect to Twilio room using the same tracks and enable recording
         const room = await connect(token, {
           name: roomName,
-          tracks: [videoTrack,audioTrack]
+          tracks: localTracks,
+          recordParticipantsOnConnect: true // Enable recording for participants on connect
         });
     
         setRoom(room);
     
+        // ✅ Log the Room SID and Local Participant SID
+        console.log('✅ Connected to Room:');
+        console.log('Room SID:', room.sid);
+        setSid(room.sid);
+        console.log('Local Participant SID:', room.localParticipant.sid);
+        try {
+          const res = await axios.post('https://81ca-103-181-126-156.ngrok-free.app/composition/video', {
+            "roomSid": room.sid
+           
+          }, {
+            headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+            }
+          });
+          console.log(res.data);
+          
+          } catch (error) {
+          console.error('Error fetching token:', error);
+          } 
         // Subscribe to existing participants
         room.participants.forEach(participant => {
           subscribeToParticipantTracks(participant);
@@ -92,18 +110,22 @@ const VideoCallRoom = ({ token, roomName }) => {
         // Subscribe to new participants
         room.on('participantConnected', participant => {
           console.log(`${participant.identity} joined`);
+          console.log('Participant SID:', participant.sid);
           subscribeToParticipantTracks(participant);
         });
     
         room.on('participantDisconnected', participant => {
           console.log(`${participant.identity} left`);
+          console.log('Participant SID:', participant.sid);
           // Optionally clean up
         });
     
       } catch (error) {
-        console.error('Failed to connect to the room:', error);
+        console.error('❌ Failed to connect to the room:', error);
       }
     };
+    
+    
     
     joinRoom();
 
@@ -142,7 +164,25 @@ const VideoCallRoom = ({ token, roomName }) => {
     setVideoEnabled(!isVideoEnabled);
   };
 
-  const leaveRoom = () => {
+  const leaveRoom =async () => {
+    
+    try {
+      const res = await axios.post('https://81ca-103-181-126-156.ngrok-free.app/composition/video', {
+        "roomSid": sid
+       
+      }, {
+        headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+        }
+      });
+      console.log(res.data);
+      
+      } catch (error) {
+      console.error('Error fetching token:', error);
+      } finally {
+      
+      }
     if (room) {
       room.disconnect();
       setRoom(null);
